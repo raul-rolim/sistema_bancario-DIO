@@ -1,61 +1,152 @@
-saldo = 0
-limite = 500
-extrato = ""
-numero_saques = 0
-LIMITE_SAQUES = 3
+# #EXTRATO
+# 	-Positional (saldo) and Keyword (extrato)
+#
+# #CRIAR USUÁRIO (CLIENTE)
+# 	-Armazenar em uma lista (nome,nascimento,cpf e endereço 	(logradouro, numero - bairro - cidade/sigla estado)
+# 	-Apenas um cadastro por CPF
+#
+# #CRIAR CONTA CORRENTE
+# 	-Lista: agência, número da conta e usuário
+# 	-Número da conta é sequencial, iniciando em 1
+# 	-Agência é fixo: 0001
+# 	-O usuário pode ter mais de uma conta, mas deve pertencer a apenas 	um usuário cada conta.
 
-print("Bem Vindo ao Banco Virtual DIO")
-menu = """
-\n
-[d] Depositar
-[s] Sacar
-[e] Extrato
-[q] Sair
 
-Opção Selecionada
-"""
 
-while True:
+def menu():
+    menu = """
+    \n
+    [d] Depositar
+    [s] Sacar
+    [e] Extrato
+    [nc] Nova Conta
+    [nu] Novo Usuário
+    [q] Sair
+
+    Opção Selecionada
+    """
     opcao = input(menu)
+    return opcao
 
-    if opcao == 'd':
-        valor_depositado = float(input("Insira o valor que deseja depositar: "))
+def main():
+    global numero_conta
+    numero_conta = 1
+    usuarios = []
+    contas = []
 
-        if valor_depositado > 0:
-            saldo += valor_depositado
-            extrato += f"Depósito: R$ {valor_depositado:.2f}\n"
-            print("Depósito realizado com sucesso!\n")
+
+    while True:
+        opcao = menu()
+        if opcao == 'd':
+            valor_a_depositar = float(input("Insira o valor que deseja depositar: "))
+            depositar(valor_a_depositar)
+
+        elif opcao == 's':
+            valor_a_sacar = float(input("Insira o valor que deseja sacar: "))
+            saque(valor_sacado=valor_a_sacar)
+
+        elif opcao == 'e':
+            extrato()
+
+        elif opcao == 'nc':
+            criar_conta()
+
+        elif opcao == 'nu':
+            criar_usuario()
+
+        elif opcao == 'q':
+            print("Obrigado por utilizar nossos serviços!\nAté a próxima")
+            exit()
+
         else:
-            print("Não foi possível efetuar o depósito. O valor inserido é inválido")
+            print("Opção inválida. Tente Novamente")
 
-    elif opcao == 's':
-        if numero_saques < LIMITE_SAQUES:
-            print(f"Saldo Disponível: R$ {saldo:.2f}\n")
-            valor_sacado = float(input("Insira o valor que deseja sacar: "))
-            if (valor_sacado > 0 and valor_sacado <= limite) and (saldo >= valor_sacado and saldo >= 0):
-                saldo -= valor_sacado
-                extrato += f"Saque: R$ {valor_sacado:.2f}\n"
-                numero_saques += 1
-                print("Saque realizado com sucesso!\n")
-            elif saldo < valor_sacado:
-                print("Não foi possível efetuar o saque. Saldo Insuficiente")
-
-            else:
-                print("Não foi possível efetuar o saque. O valor inserido é inválido!")
-        else:
-            print("Você atingiu o limite de quantidades de saques diários!")
-
-    elif opcao == 'e':
-        print("================ EXTRATO ================")
-        if extrato == "":
-            print("Você ainda não realizou nenhuma operação no momento!")
-        else:
-            print(f"Saldo Disponível: R$ {saldo:.2f}\n")
-            print(extrato)
-        print("=========================================")
-
-    elif opcao == 'q':
-        print("Obrigado por utilizar nossos serviços!\nAté a próxima")
-        break
+def depositar(valor_depositado, saldo, extrato, /):
+    if valor_depositado > 0:
+        saldo += valor_depositado
+        extrato += f"Depósito: R$ {valor_depositado:.2f}\n"
+        print("Depósito realizado com sucesso!\n")
     else:
-        print("Opção inválida. Tente Novamente")
+        print("Não foi possível efetuar o depósito. O valor inserido é inválido")
+
+def saque(*, valor_sacado, saldo, extrato, numero_saques):
+
+    saque_valido = valor_sacado > 0 and valor_sacado <= limite
+    saldo_suficiente = saldo >= valor_sacado and saldo >= 0
+    limite_saques = numero_saques >= LIMITE_SAQUES
+
+    if saque_valido and saldo_suficiente:
+        saldo -= valor_sacado
+        extrato += f"Saque: R$ {valor_sacado:.2f}\n"
+        numero_saques += 1
+        print("Saque realizado com sucesso!\n")
+
+    elif saldo < valor_sacado:
+        print("Não foi possível efetuar o saque. Saldo Insuficiente")
+
+    elif limite_saques:
+        print("Você atingiu o limite de quantidades de saques diários!")
+
+    else:
+        print("Não foi possível efetuar o saque. O valor inserido é inválido!")
+
+def extrato(saldo, /, extrato, *, usuario):
+    print("================ EXTRATO ================")
+    if extrato == "":
+        print("Você ainda não realizou nenhuma operação no momento!")
+    else:
+        print(f"Saldo Disponível: R$ {saldo:.2f}\n")
+        print(extrato)
+    print("=========================================")
+
+def criar_usuario(usuarios):
+    nome = input("Insira seu nome: ")
+    cpf = input("Insira seu cpf: ")
+    if verificar_usuario(usuarios, cpf):
+        print("Erro!\nO CPF inserido já foi cadastrado anteriormente!")
+
+    else:
+        data_nascimento = input("Insira sua data de nascimento: ")
+        endereco = input("Insira seu endereço (logradouro, número da residência, bairro - estado/sigla cidade): ")
+        usuario = {'nome': nome,
+                   'cpf': cpf,
+                   'data_nascimento': data_nascimento,
+                   'endereço': endereco
+                   }
+
+        usuarios.append(usuario)
+
+        print(f"Usuário criado com sucesso\nBem Vindo {nome}")
+
+        print(usuario)
+
+def verificar_usuario(usuarios, cpf):
+    for usuario in usuarios:
+
+        if cpf == usuario['cpf']:
+            return True
+        
+    return False
+
+def criar_conta(usuario):
+    global numero_conta
+    LIMITE_SAQUES = 3
+    AGENCIA = "0001"
+    saldo = 0
+    limite_por_saque = 500
+    extrato = ""
+    numero_saques = 0
+    if usuario['nome'] == None:
+        print("Você ainda não se cadastrou!")
+    else:
+        conta_corrente = {'usuario':usuario,
+                          'saldo':saldo,
+                          'extrato':extrato,
+                          'limite_por_saque':limite_por_saque,
+                          'limite_saques':LIMITE_SAQUES,
+                          'numero_saques':numero_saques,
+                          'numero_conta':numero_conta,
+                          'agencia':AGENCIA}
+        numero_conta += 1
+
+main()
